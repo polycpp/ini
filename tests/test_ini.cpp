@@ -1266,3 +1266,56 @@ TEST(IniTest, IniValueDefaultIsNull) {
     IniValue v;
     EXPECT_TRUE(v.isNull());
 }
+
+// ===========================================================================
+// Surrogate pair handling in JSON-quoted values
+// ===========================================================================
+
+TEST(IniTest, UnsafeSurrogatePairEmoji) {
+    // \uD83D\uDE00 is the surrogate pair for U+1F600 (😀)
+    // UTF-8 encoding: F0 9F 98 80
+    std::string input = "\"\\uD83D\\uDE00\"";
+    std::string result = unsafe(input);
+    EXPECT_EQ(result.size(), 4u);
+    EXPECT_EQ(static_cast<unsigned char>(result[0]), 0xF0);
+    EXPECT_EQ(static_cast<unsigned char>(result[1]), 0x9F);
+    EXPECT_EQ(static_cast<unsigned char>(result[2]), 0x98);
+    EXPECT_EQ(static_cast<unsigned char>(result[3]), 0x80);
+}
+
+TEST(IniTest, UnsafeSurrogatePairInValue) {
+    // INI value with JSON-quoted emoji should round-trip through parse
+    auto doc = parse("key=\"\\uD83D\\uDE00\"\n");
+    auto* val = find(doc, "key");
+    ASSERT_NE(val, nullptr);
+    ASSERT_TRUE(val->isString());
+    // U+1F600 in UTF-8 is F0 9F 98 80
+    std::string expected = "\xF0\x9F\x98\x80";
+    EXPECT_EQ(val->asString(), expected);
+}
+
+TEST(IniTest, UnsafeLoneSurrogatePreservesAsWtf8) {
+    // A lone high surrogate is preserved as WTF-8 by polycpp::JSON::parse,
+    // matching Node.js behavior
+    std::string input = "\"\\uD83D\"";
+    std::string result = unsafe(input);
+    std::string expected = "\xED\xA0\xBD"; // U+D83D in WTF-8/CESU-8
+    EXPECT_EQ(result, expected);
+}
+
+TEST(IniTest, UnsafeLoneLowSurrogatePreservesAsWtf8) {
+    // A lone low surrogate is preserved as WTF-8 by polycpp::JSON::parse,
+    // matching Node.js behavior
+    std::string input = "\"\\uDE00\"";
+    std::string result = unsafe(input);
+    std::string expected = "\xED\xB8\x80"; // U+DE00 in WTF-8/CESU-8
+    EXPECT_EQ(result, expected);
+}
+
+TEST(IniTest, UnsafeSingleQuotedWithJsonContent) {
+    // Single-quoted value wrapping valid JSON should be JSON-parsed
+    // (matches JS behavior: strip quotes then JSON.parse)
+    EXPECT_EQ(unsafe("'\"hello\"'"), "hello");
+    // Plain single-quoted: JSON.parse fails, returns stripped content
+    EXPECT_EQ(unsafe("'something'"), "something");
+}

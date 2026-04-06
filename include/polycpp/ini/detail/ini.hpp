@@ -7,12 +7,11 @@
  */
 
 #include <polycpp/ini/ini.hpp>
+#include <polycpp/core/json.hpp>
 
 #include <algorithm>
-#include <cstdio>
 #include <cstdlib>
 #include <regex>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -26,118 +25,36 @@ namespace ini {
 namespace detail {
 
 /**
- * @brief Minimal JSON string escaper (wraps string in double quotes with escapes).
+ * @brief JSON-stringify a single string value.
+ *
+ * Delegates to polycpp::JSON::stringify which handles UTF-8 validation,
+ * surrogate pair escaping, and all control character escaping correctly.
  */
 inline std::string jsonStringify(const std::string& s) {
-    std::string result = "\"";
-    for (char c : s) {
-        switch (c) {
-            case '"':  result += "\\\""; break;
-            case '\\': result += "\\\\"; break;
-            case '\n': result += "\\n"; break;
-            case '\r': result += "\\r"; break;
-            case '\t': result += "\\t"; break;
-            case '\b': result += "\\b"; break;
-            case '\f': result += "\\f"; break;
-            default:
-                if (static_cast<unsigned char>(c) < 0x20) {
-                    char buf[8];
-                    std::snprintf(buf, sizeof(buf), "\\u%04x",
-                                  static_cast<unsigned char>(c));
-                    result += buf;
-                } else {
-                    result += c;
-                }
-        }
-    }
-    result += "\"";
-    return result;
-}
-
-/**
- * @brief Convert a single hex digit character to its integer value.
- * @return The value 0-15, or -1 on invalid input.
- */
-inline int hexDigit(char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return 10 + (c - 'a');
-    if (c >= 'A' && c <= 'F') return 10 + (c - 'A');
-    return -1;
+    return polycpp::JSON::stringify(polycpp::JsonValue(s));
 }
 
 /**
  * @brief Parse a JSON-escaped string (input must start and end with `"`).
  *
- * Handles: \\", \\\\, \\/, \\n, \\r, \\t, \\b, \\f, \\uXXXX.
- * On parse failure (e.g., unescaped `"` inside), returns the input unchanged
- * (matching JS try { JSON.parse(val) } catch { } behavior).
+ * Delegates to polycpp::JSON::parse which handles \\uXXXX (including
+ * UTF-16 surrogate pairs), all standard escape sequences, and UTF-8
+ * validation. On parse failure returns the input unchanged (matching
+ * JS try { JSON.parse(val) } catch { } behavior).
  */
 inline std::string jsonParse(const std::string& s) {
     if (s.size() < 2 || s.front() != '"' || s.back() != '"') {
         return s;
     }
-    std::string result;
-    result.reserve(s.size());
-    bool valid = true;
-    for (size_t i = 1; i < s.size() - 1; ++i) {
-        if (s[i] == '\\' && i + 1 < s.size() - 1) {
-            char next = s[i + 1];
-            switch (next) {
-                case '"':  result += '"'; ++i; break;
-                case '\\': result += '\\'; ++i; break;
-                case '/':  result += '/'; ++i; break;
-                case 'n':  result += '\n'; ++i; break;
-                case 'r':  result += '\r'; ++i; break;
-                case 't':  result += '\t'; ++i; break;
-                case 'b':  result += '\b'; ++i; break;
-                case 'f':  result += '\f'; ++i; break;
-                case 'u': {
-                    if (i + 5 < s.size()) {
-                        int d0 = hexDigit(s[i + 2]);
-                        int d1 = hexDigit(s[i + 3]);
-                        int d2 = hexDigit(s[i + 4]);
-                        int d3 = hexDigit(s[i + 5]);
-                        if (d0 >= 0 && d1 >= 0 && d2 >= 0 && d3 >= 0) {
-                            int cp = (d0 << 12) | (d1 << 8) | (d2 << 4) | d3;
-                            // Encode codepoint as UTF-8
-                            if (cp < 0x80) {
-                                result += static_cast<char>(cp);
-                            } else if (cp < 0x800) {
-                                result += static_cast<char>(0xC0 | (cp >> 6));
-                                result += static_cast<char>(0x80 | (cp & 0x3F));
-                            } else {
-                                result += static_cast<char>(0xE0 | (cp >> 12));
-                                result += static_cast<char>(0x80 | ((cp >> 6) & 0x3F));
-                                result += static_cast<char>(0x80 | (cp & 0x3F));
-                            }
-                            i += 5;
-                        } else {
-                            valid = false;
-                            break;
-                        }
-                    } else {
-                        valid = false;
-                    }
-                    break;
-                }
-                default:
-                    // Invalid escape sequence in JSON
-                    valid = false;
-                    break;
-            }
-            if (!valid) break;
-        } else if (s[i] == '"') {
-            // Unescaped quote inside the string — invalid JSON
-            valid = false;
-            break;
-        } else {
-            result += s[i];
+    try {
+        auto val = polycpp::JSON::parse(s);
+        if (val.isString()) {
+            return val.asString();
         }
+    } catch (...) {
+        // Return original on parse failure (matches JS behavior)
     }
-    if (!valid) {
-        return s; // Return original on parse failure
-    }
-    return result;
+    return s;
 }
 
 /**
@@ -175,34 +92,32 @@ inline std::string trim(const std::string& s) {
 inline std::vector<std::string> splitSections(const std::string& str,
                                                char separator) {
     std::vector<std::string> sections;
-    int lastMatchIndex = 0;
-    int lastSeparatorIndex = 0;
-    int nextIndex = 0;
+    size_t lastMatchIndex = 0;
+    size_t lastSeparatorIndex = 0;
+    bool found = true;
 
     do {
         // Find next occurrence of separator starting at lastMatchIndex
-        auto pos = str.find(separator, static_cast<size_t>(lastMatchIndex));
+        auto pos = str.find(separator, lastMatchIndex);
         if (pos == std::string::npos) {
-            nextIndex = -1;
+            found = false;
         } else {
-            nextIndex = static_cast<int>(pos);
+            found = true;
         }
 
-        if (nextIndex != -1) {
-            lastMatchIndex = nextIndex + 1;
+        if (found) {
+            lastMatchIndex = pos + 1;
 
-            if (nextIndex > 0 && str[static_cast<size_t>(nextIndex) - 1] == '\\') {
+            if (pos > 0 && str[pos - 1] == '\\') {
                 continue;
             }
 
-            sections.push_back(
-                str.substr(static_cast<size_t>(lastSeparatorIndex),
-                           static_cast<size_t>(nextIndex) - static_cast<size_t>(lastSeparatorIndex)));
-            lastSeparatorIndex = nextIndex + 1;
+            sections.push_back(str.substr(lastSeparatorIndex, pos - lastSeparatorIndex));
+            lastSeparatorIndex = pos + 1;
         }
-    } while (nextIndex != -1);
+    } while (found);
 
-    sections.push_back(str.substr(static_cast<size_t>(lastSeparatorIndex)));
+    sections.push_back(str.substr(lastSeparatorIndex));
     return sections;
 }
 
@@ -425,14 +340,15 @@ inline std::string unsafe(const std::string& val) {
     }
 
     if (detail::isQuoted(trimmed)) {
-        // If single-quoted, strip quotes first
+        // If single-quoted, strip quotes before attempting JSON parse
+        // (matches JS: strip single quotes, then JSON.parse for all quoted)
         if (trimmed.front() == '\'') {
             trimmed = trimmed.substr(1, trimmed.size() - 2);
-        } else {
-            // Double-quoted: try JSON parse
-            std::string parsed = detail::jsonParse(trimmed);
-            trimmed = parsed;
         }
+        // Try JSON parse (handles double-quoted strings and single-quoted
+        // strings whose content is valid JSON, e.g. '"hello"' → hello)
+        std::string parsed = detail::jsonParse(trimmed);
+        trimmed = parsed;
         return trimmed;
     }
 
@@ -472,7 +388,6 @@ inline IniDocument decode(const std::string& str, const DecodeOptions& opt) {
 
     // Current target document (either out or a section's document)
     IniDocument* p = &out;
-    bool inProtoSection = false;
     IniDocument protoSink; // throwaway for __proto__ sections
 
     // Regex: section header OR key=value
@@ -535,12 +450,10 @@ inline IniDocument decode(const std::string& str, const DecodeOptions& opt) {
             std::string section = unsafe(match[1].str());
             if (section == "__proto__") {
                 // Parse into throwaway doc
-                inProtoSection = true;
                 protoSink.clear();
                 p = &protoSink;
                 continue;
             }
-            inProtoSection = false;
 
             // Find or create the section in out
             IniValue* existing = find(out, section);
