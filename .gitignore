@@ -36,6 +36,13 @@ CTestTestfile.cmake
 # Package managers / FetchContent
 _deps/
 
+# libgen scratch directory (upstream clones, npm artifacts, analyzer JSON)
+.tmp/
+
+# Local build logs from CI scripts
+build.build.log
+build.configure.log
+
 # AI agent files
 CLAUDE.md
 AGENTS.md

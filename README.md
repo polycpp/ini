@@ -4,6 +4,14 @@ C++ port of the npm [ini](https://www.npmjs.com/package/ini) package for [polycp
 
 An INI format parser and serializer for C++20, using polycpp's Node.js-like API conventions.
 
+## Status
+
+Port version: `0.1.0`
+
+Initial port based on upstream version: `6.0.0`
+
+The C++ port owns its versioning independently from the upstream npm package. See `docs/research.md` and `docs/divergences.md` for the implemented surface and the deliberate behavior changes from upstream.
+
 ## Features
 
 - Parse INI text into structured C++ objects
@@ -46,8 +54,8 @@ name=mydb
 
     // Access values
     auto* db = polycpp::ini::find(config, "database");
-    if (db && db->isObject()) {
-        auto* host = polycpp::ini::find(db->asObject(), "host");
+    if (db && db->isDocument()) {
+        auto* host = polycpp::ini::find(db->asDocument(), "host");
         if (host) std::cout << "Host: " << host->asString() << "\n";
     }
 
