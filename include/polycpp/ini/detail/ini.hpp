@@ -10,6 +10,7 @@
 #include <polycpp/core/json.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <regex>
 #include <string>
@@ -123,11 +124,16 @@ inline std::vector<std::string> splitSections(const std::string& str,
 
 /**
  * @brief Convert an IniValue to its string representation for encoding.
+ *
+ * Only scalar variants (null, bool, string) reach this helper. Arrays are
+ * flattened by `stringify()` before reaching here, and documents are recursed
+ * into as nested sections.
  */
 inline std::string valueToString(const IniValue& val) {
     if (val.isNull()) return "null";
     if (val.isBool()) return val.asBool() ? "true" : "false";
     if (val.isString()) return val.asString();
+    assert(false && "valueToString called on non-scalar IniValue");
     return "";
 }
 
@@ -386,9 +392,11 @@ inline std::string unsafe(const std::string& val) {
 inline IniDocument decode(const std::string& str, const DecodeOptions& opt) {
     IniDocument out;
 
-    // Current target document (either out or a section's document)
+    // Current target document (either out or a section's document).
+    // protoSink swallows rows under [__proto__] sections so they never
+    // make it into out.
     IniDocument* p = &out;
-    IniDocument protoSink; // throwaway for __proto__ sections
+    IniDocument protoSink;
 
     // Regex: section header OR key=value
     static const std::regex re(R"(^\[([^\]]*)\]\s*$|^([^=]+)(=(.*))?$)");
@@ -449,8 +457,7 @@ inline IniDocument decode(const std::string& str, const DecodeOptions& opt) {
         if (match[1].matched) {
             std::string section = unsafe(match[1].str());
             if (section == "__proto__") {
-                // Parse into throwaway doc
-                protoSink.clear();
+                // Subsequent rows go into the throwaway sink, never into out.
                 p = &protoSink;
                 continue;
             }
@@ -464,10 +471,6 @@ inline IniDocument decode(const std::string& str, const DecodeOptions& opt) {
                 set(out, section, IniValue(std::move(newDoc)));
                 p = &find(out, section)->asDocument();
             }
-            // Reset duplicates for each section? No — JS code uses a single
-            // duplicates object across all sections. But actually looking at
-            // the JS code, duplicates is only declared once and used for the
-            // entire parse. Let's keep it global.
             continue;
         }
 

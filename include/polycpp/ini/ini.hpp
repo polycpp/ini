@@ -44,6 +44,7 @@ using IniDocument = std::vector<std::pair<std::string, IniValue>>;
  */
 class IniValue {
 public:
+    /** @brief Element container backing the array variant. */
     using ArrayType = std::vector<IniValue>;
 
     /** @brief Construct a null value. */

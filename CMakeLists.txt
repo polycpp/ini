@@ -44,6 +44,22 @@ if(POLYCPP_INI_BUILD_TESTS)
 
     add_executable(test_ini tests/test_ini.cpp)
     target_link_libraries(test_ini PRIVATE polycpp_ini GTest::gtest_main)
+    target_compile_definitions(test_ini PRIVATE
+        INI_TESTS_FIXTURES_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures"
+    )
     include(GoogleTest)
     gtest_discover_tests(test_ini)
+endif()
+
+# Examples
+option(POLYCPP_INI_BUILD_EXAMPLES "Build examples" OFF)
+if(POLYCPP_INI_BUILD_EXAMPLES)
+    foreach(example_name IN ITEMS load_config reformat set_value)
+        add_executable(polycpp_ini_example_${example_name} examples/${example_name}.cpp)
+        target_link_libraries(polycpp_ini_example_${example_name} PRIVATE polycpp::ini)
+        set_target_properties(polycpp_ini_example_${example_name} PROPERTIES
+            OUTPUT_NAME ${example_name}
+            RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/examples
+        )
+    endforeach()
 endif()

@@ -8,7 +8,7 @@ This project is a C++ port inspired by the following open-source project(s).
 
 - **URL:** https://github.com/npm/ini
 - **License:** ISC
-- **Usage:** API design, algorithm reference, and test case inspiration for this C++ port.
+- **Usage:** API design, algorithm reference, and test case inspiration for this C++ port. The test fixtures `tests/fixtures/foo.ini` and `tests/fixtures/duplicate.ini` are byte-identical copies of the upstream `test/fixtures/foo.ini` and `test/fixtures/duplicate.ini` at tag `v6.0.0`, redistributed here under the ISC license below.
 
 ```
 The ISC License
