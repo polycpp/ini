@@ -1244,3 +1244,53 @@ TEST(IniTest, UnsafeSingleQuotedWithJsonContent) {
     // Plain single-quoted: JSON.parse fails, returns stripped content
     EXPECT_EQ(unsafe("'something'"), "something");
 }
+
+// ===========================================================================
+// Deliberate behavior divergences from upstream JS (pinning tests)
+// See docs/divergences.md ## Deliberate Behavior Changes for rationale.
+// ===========================================================================
+
+TEST(IniTest, SectionHeaderOverwritesPreExistingScalar) {
+    // AF-2026-05-04-H: when a section header [foo] follows an earlier
+    // foo=bar row, the C++ port replaces the scalar with a fresh
+    // section. Upstream JS would silently keep the scalar and drop
+    // the subsequent key=val row.
+    auto doc = parse("foo=bar\n[foo]\nkey=val\n");
+    auto* foo = find(doc, "foo");
+    ASSERT_NE(foo, nullptr);
+    ASSERT_TRUE(foo->isDocument());
+    auto* key = find(foo->asDocument(), "key");
+    ASSERT_NE(key, nullptr);
+    EXPECT_EQ(key->asString(), "val");
+}
+
+TEST(IniTest, SectionHeaderOverwritesPreExistingArray) {
+    // AF-2026-05-04-H: same rule for an existing array.
+    auto doc = parse("foo[]=a\nfoo[]=b\n[foo]\nkey=val\n");
+    auto* foo = find(doc, "foo");
+    ASSERT_NE(foo, nullptr);
+    ASSERT_TRUE(foo->isDocument());
+    EXPECT_FALSE(foo->isArray());
+    auto* key = find(foo->asDocument(), "key");
+    ASSERT_NE(key, nullptr);
+    EXPECT_EQ(key->asString(), "val");
+}
+
+TEST(IniTest, DottedSectionMergeOverwritesIntermediateArray) {
+    // AF-2026-05-04-I: during the dotted-section merge post-pass,
+    // when an intermediate path part collides with an existing array,
+    // the C++ port replaces the array with a fresh document.
+    // Upstream JS would reuse the array and silently set a hidden
+    // named property on it.
+    auto doc = parse("foo[]=item1\n[foo.bar]\nkey=val\n");
+    auto* foo = find(doc, "foo");
+    ASSERT_NE(foo, nullptr);
+    ASSERT_TRUE(foo->isDocument());
+    EXPECT_FALSE(foo->isArray());
+    auto* bar = find(foo->asDocument(), "bar");
+    ASSERT_NE(bar, nullptr);
+    ASSERT_TRUE(bar->isDocument());
+    auto* key = find(bar->asDocument(), "key");
+    ASSERT_NE(key, nullptr);
+    EXPECT_EQ(key->asString(), "val");
+}
