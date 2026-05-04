@@ -235,6 +235,26 @@ inline bool IniValue::operator!=(const IniValue& other) const {
     return value_ != other.value_;
 }
 
+inline polycpp::JsonValue IniValue::toJSON() const {
+    if (isNull()) return polycpp::JsonValue(nullptr);
+    if (isBool()) return polycpp::JsonValue(asBool());
+    if (isString()) return polycpp::JsonValue(asString());
+    if (isArray()) {
+        polycpp::JsonArray arr;
+        arr.reserve(asArray().size());
+        for (const auto& v : asArray()) {
+            arr.push_back(v.toJSON());
+        }
+        return polycpp::JsonValue(std::move(arr));
+    }
+    // isDocument()
+    polycpp::JsonObject obj;
+    for (const auto& [k, v] : asDocument()) {
+        obj[k] = v.toJSON();
+    }
+    return polycpp::JsonValue(std::move(obj));
+}
+
 // ===========================================================================
 // IniDocument helper functions
 // ===========================================================================

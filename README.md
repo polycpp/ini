@@ -6,7 +6,7 @@ An INI format parser and serializer for C++20, using polycpp's Node.js-like API 
 
 ## Status
 
-Port version: `0.1.0`
+Port version: `0.2.0`
 
 Initial port based on upstream version: `6.0.0`
 
@@ -80,6 +80,12 @@ Escape a string value for safe INI output.
 
 ### `polycpp::ini::unsafe(val)`
 Unescape an INI value string.
+
+### `polycpp::ini::find/hasKey/set/keys/remove(doc, key)`
+Order-preserving helpers over `IniDocument`. `find` returns a pointer (or `nullptr`), `set` overwrites in place or appends at the end, `keys` returns insertion order.
+
+### `IniValue::toJSON()` / `polycpp::JSON::stringify(IniValue)`
+Recursively converts an `IniValue` into a `polycpp::JsonValue`. Combined with polycpp's `HasToJson` concept, calling `polycpp::JSON::stringify(v)` on any `IniValue` works directly. Numeric-looking INI values stay as JSON strings, matching upstream `ini` semantics.
 
 ## License
 

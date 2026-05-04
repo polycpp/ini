@@ -7,6 +7,8 @@
  * @since 0.1.0
  */
 
+#include <polycpp/core/fwd.hpp>
+
 #include <string>
 #include <vector>
 #include <variant>
@@ -146,6 +148,32 @@ public:
 
     /** @brief Inequality comparison. */
     bool operator!=(const IniValue& other) const;
+
+    /**
+     * @brief Convert to a `polycpp::JsonValue`.
+     *
+     * Recursively maps the variant: `null` → JSON null, `bool` → JSON bool,
+     * `string` → JSON string, `array<IniValue>` → JSON array,
+     * `IniDocument` → JSON object preserving insertion order.
+     *
+     * Combined with polycpp's `HasToJson` concept, this enables
+     * `polycpp::JSON::stringify(IniValue)` directly.
+     *
+     * Note: numeric-looking INI values stay as JSON strings, mirroring
+     * upstream `ini` semantics — INI has no native number type.
+     *
+     * @par Example
+     * @code
+     * auto doc = polycpp::ini::parse("[a]\nx=1\n");
+     * polycpp::ini::IniValue v(std::move(doc));
+     * std::string j = polycpp::JSON::stringify(v);
+     * // j == "{\"a\":{\"x\":\"1\"}}"
+     * @endcode
+     *
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#tojson_behavior
+     * @since 0.2.0
+     */
+    polycpp::JsonValue toJSON() const;
 
 private:
     std::variant<std::nullptr_t, bool, std::string, ArrayType, IniDocument> value_;

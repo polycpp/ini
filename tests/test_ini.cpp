@@ -1276,6 +1276,76 @@ TEST(IniTest, SectionHeaderOverwritesPreExistingArray) {
     EXPECT_EQ(key->asString(), "val");
 }
 
+// ===========================================================================
+// IniValue::toJSON() and polycpp::JSON::stringify(IniValue) interop
+// ===========================================================================
+
+TEST(IniTest, ToJsonScalarVariants) {
+    EXPECT_TRUE(IniValue(nullptr).toJSON().isNull());
+    EXPECT_TRUE(IniValue(true).toJSON().isBool());
+    EXPECT_TRUE(IniValue(true).toJSON().asBool());
+    EXPECT_FALSE(IniValue(false).toJSON().asBool());
+    EXPECT_EQ(IniValue("hello").toJSON().asString(), "hello");
+    // Numeric-looking INI values stay strings, mirroring upstream.
+    EXPECT_EQ(IniValue("42").toJSON().asString(), "42");
+}
+
+TEST(IniTest, ToJsonArray) {
+    IniValue::ArrayType arr;
+    arr.push_back(IniValue("one"));
+    arr.push_back(IniValue("two"));
+    arr.push_back(IniValue(true));
+    polycpp::JsonValue j = IniValue(std::move(arr)).toJSON();
+    ASSERT_TRUE(j.isArray());
+    ASSERT_EQ(j.asArray().size(), 3u);
+    EXPECT_EQ(j.asArray()[0].asString(), "one");
+    EXPECT_EQ(j.asArray()[1].asString(), "two");
+    EXPECT_TRUE(j.asArray()[2].asBool());
+}
+
+TEST(IniTest, ToJsonNestedDocumentPreservesOrder) {
+    IniDocument inner;
+    set(inner, "host", IniValue("localhost"));
+    set(inner, "port", IniValue("5432"));
+    IniDocument doc;
+    set(doc, "db", IniValue(std::move(inner)));
+    set(doc, "debug", IniValue(true));
+
+    polycpp::JsonValue j = IniValue(std::move(doc)).toJSON();
+    ASSERT_TRUE(j.isObject());
+
+    // Keys preserve insertion order (db before debug).
+    auto keys_it = j.asObject().begin();
+    ASSERT_NE(keys_it, j.asObject().end());
+    EXPECT_EQ(keys_it->first, "db");
+    ++keys_it;
+    ASSERT_NE(keys_it, j.asObject().end());
+    EXPECT_EQ(keys_it->first, "debug");
+
+    EXPECT_EQ(j.asObject().at("db").asObject().at("host").asString(), "localhost");
+    EXPECT_EQ(j.asObject().at("db").asObject().at("port").asString(), "5432");
+    EXPECT_TRUE(j.asObject().at("debug").asBool());
+}
+
+TEST(IniTest, JSONStringifyOnIniValueViaHasToJson) {
+    // polycpp's HasToJson concept lights up the templated
+    // polycpp::JSON::stringify(const T&) overload as soon as
+    // IniValue::toJSON() exists.
+    auto doc = parse("[a]\nx=1\n");
+    IniValue v(std::move(doc));
+    std::string j = polycpp::JSON::stringify(v);
+    EXPECT_EQ(j, "{\"a\":{\"x\":\"1\"}}");
+}
+
+TEST(IniTest, JSONStringifyOnIniValueArrayRoundtrip) {
+    IniValue::ArrayType arr;
+    arr.push_back(IniValue("a"));
+    arr.push_back(IniValue(false));
+    arr.push_back(IniValue(nullptr));
+    IniValue v(std::move(arr));
+    EXPECT_EQ(polycpp::JSON::stringify(v), "[\"a\",false,null]");
+}
+
 TEST(IniTest, DottedSectionMergeOverwritesIntermediateArray) {
     // AF-2026-05-04-I: during the dotted-section merge post-pass,
     // when an intermediate path part collides with an existing array,

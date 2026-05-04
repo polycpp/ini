@@ -243,12 +243,14 @@ infer or hand-write a `.d.ts` shim. The README is the canonical contract.
     public API. Public callers see only `IniValue`.
   - Date/time interop policy: not applicable.
   - diagnostic/config object policy: `IniValue::isString()`/`asString()`/
-    `isBool()`/`isArray()`/`isDocument()` are typed accessors. No `toJSON()` or
-    `toObject()` adapters are provided in v0; converting to `polycpp::JsonValue`
-    is recorded as a non-parity extension candidate.
-  - toJSON/stringify policy: `polycpp::JSON::stringify(IniValue)` is not
-    supported in v0; recorded as a non-parity extension candidate. Direct INI
-    stringification is via `polycpp::ini::stringify(IniDocument&)`.
+    `isBool()`/`isArray()`/`isDocument()` are typed accessors. `IniValue::toJSON()`
+    converts to `polycpp::JsonValue` (added in `0.2.0`); a JSON-to-INI
+    `fromJSON()` adapter is not provided yet.
+  - toJSON/stringify policy: `polycpp::JSON::stringify(IniValue)` is supported
+    via the `HasToJson` concept (`IniValue::toJSON()` returns
+    `polycpp::JsonValue`); the templated overload in `polycpp::JSON::stringify`
+    is auto-enabled. Direct INI stringification remains via
+    `polycpp::ini::stringify(IniDocument&)`.
 - companion libs inspected for reusable APIs: `cookie`, `qs`, `dotenv`. None
   expose a structure that can be reused directly. `qs` parses a different
   format (URL-encoded query strings); `dotenv` parses a different format
@@ -396,10 +398,10 @@ infer or hand-write a `.d.ts` shim. The README is the canonical contract.
 
 ## Features to defer
 
-- streaming/chunked parse and serialize (no upstream surface; recorded as a
-  non-parity extension candidate)
-- `polycpp::JsonValue` interop (`toJSON`/`JSON::stringify(IniValue)`) (recorded
-  as a non-parity extension candidate)
+- None. v0 implements the full upstream public surface (`parse`/`decode`,
+  `stringify`/`encode`, `safe`/`unsafe`, plus all encode/decode options). The
+  domain or standard extensions that upstream does not implement are recorded
+  separately under `## Non-parity extension candidates` below.
 
 ## Non-parity extension candidates
 
@@ -407,11 +409,12 @@ These are domain or standard features that upstream does not implement and
 that the C++ port has NOT accepted as future work. They are recorded so a
 future maintainer can revisit them, not promised:
 
-- `polycpp::JSON::stringify(IniValue)` adapter and a `toJSON()` method on
-  `IniValue` — would let consumers move data between `polycpp::ini` and
-  `polycpp::JSON` without manual conversion. Upstream does not provide this
-  because JS objects are already JSON-compatible; in C++ the gap is real but
-  not a parity gap.
+- `polycpp::JsonValue → IniValue` (`fromJSON`) adapter — the inverse of
+  `IniValue::toJSON()`. Lossy by nature: JSON numbers must collapse into INI
+  strings (since INI has no number type). Worth adding once a concrete
+  consumer asks. Outbound `IniValue::toJSON()` and
+  `polycpp::JSON::stringify(IniValue)` are now implemented (added in `0.2.0`);
+  see `docs/api-mapping.md`.
 - streaming/chunked parse and serialize — would let consumers handle very
   large INI files without buffering the entire text. Upstream `ini` reads the
   whole string at once, so this is a domain extension, not a parity defer.
@@ -425,10 +428,10 @@ future maintainer can revisit them, not promised:
 
 ## v0 scope
 
-- port version: 0.1.0
+- port version: 0.2.0
 - versioning note: port version is independent from upstream npm versioning;
   the README declares "Initial port based on upstream version: 6.0.0".
-- supported APIs: `polycpp::ini::parse`, `decode`, `stringify`, `encode`, `safe`, `unsafe`, plus the `IniValue`/`IniDocument`/`EncodeOptions`/`DecodeOptions` types and the `find/hasKey/set/keys/remove` helpers.
+- supported APIs: `polycpp::ini::parse`, `decode`, `stringify`, `encode`, `safe`, `unsafe`, plus the `IniValue`/`IniDocument`/`EncodeOptions`/`DecodeOptions` types, the `find/hasKey/set/keys/remove` helpers, and (since `0.2.0`) `IniValue::toJSON()` plus the `polycpp::JSON::stringify(IniValue)` template overload it enables.
   - `polycpp::ini::parse(const std::string&, const DecodeOptions&)` — alias for `decode`
   - `polycpp::ini::decode(const std::string&, const DecodeOptions&)`
   - `polycpp::ini::stringify(const IniDocument&, const EncodeOptions&)` — alias for `encode`
