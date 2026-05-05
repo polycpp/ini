@@ -30,8 +30,8 @@
 | `Object.create(null)` proto-safety result | `IniDocument` (`std::vector<std::pair<std::string,IniValue>>`) | adapted | C++ container has no prototype chain; `__proto__` keys are still filtered for behavior parity. |
 | Plain JS object as `obj[k]` mutation interface | `polycpp::ini::find/hasKey/set/keys/remove` helpers | adapted | `vector<pair>` lookup is verbose; helpers preserve insertion order and replace-in-place. |
 | not upstream | `polycpp::ini::IniValue` (variant) and `polycpp::ini::IniDocument` typedef | adapted | Required because INI's value model differs from `polycpp::JsonValue`. See `docs/research.md` `## Polycpp ecosystem reuse analysis`. |
-| not upstream | `polycpp::ini::IniValue::toJSON()` (added in `0.2.0`) | adapted | Recursively converts the variant to `polycpp::JsonValue`: null/bool/string pass through; arrays become `JsonArray` of converted elements; `IniDocument` becomes `JsonObject` preserving insertion order. Numeric-looking INI values stay as JSON strings, matching upstream INI semantics (no native number type). |
-| not upstream | `polycpp::JSON::stringify(IniValue)` (added in `0.2.0`) | adapted | Auto-enabled via polycpp's `HasToJson` concept template overload as soon as `IniValue::toJSON()` exists. Tested by `IniTest.JSONStringifyOnIniValueViaHasToJson` and `IniTest.JSONStringifyOnIniValueArrayRoundtrip`. |
+| not upstream | `polycpp::ini::IniValue::toJSON()` (added in `1.0.0`) | adapted | Recursively converts the variant to `polycpp::JsonValue`: null/bool/string pass through; arrays become `JsonArray` of converted elements; `IniDocument` becomes `JsonObject` preserving insertion order. Numeric-looking INI values stay as JSON strings, matching upstream INI semantics (no native number type). |
+| not upstream | `polycpp::JSON::stringify(IniValue)` (added in `1.0.0`) | adapted | Auto-enabled via polycpp's `HasToJson` concept template overload as soon as `IniValue::toJSON()` exists. Tested by `IniTest.JSONStringifyOnIniValueViaHasToJson` and `IniTest.JSONStringifyOnIniValueArrayRoundtrip`. |
 
 Status values:
 

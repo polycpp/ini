@@ -4,7 +4,7 @@
  * @file ini.hpp
  * @brief C++ port of npm ini v6.0.0 — INI format parser and serializer.
  * @see https://www.npmjs.com/package/ini
- * @since 0.1.0
+ * @since 1.0.0
  */
 
 #include <polycpp/core/fwd.hpp>
@@ -42,7 +42,7 @@ using IniDocument = std::vector<std::pair<std::string, IniValue>>;
  * - IniDocument (nested sections)
  *
  * @see https://www.npmjs.com/package/ini
- * @since 0.1.0
+ * @since 1.0.0
  */
 class IniValue {
 public:
@@ -171,7 +171,7 @@ public:
      * @endcode
      *
      * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#tojson_behavior
-     * @since 0.2.0
+     * @since 1.0.0
      */
     polycpp::JsonValue toJSON() const;
 
@@ -182,7 +182,7 @@ private:
 /**
  * @brief Options for encoding (stringify) an IniDocument.
  * @see https://github.com/npm/ini#encodeobject-options
- * @since 0.1.0
+ * @since 1.0.0
  */
 struct EncodeOptions {
     /** @brief Section prefix for the encoded output. */
@@ -210,7 +210,7 @@ struct EncodeOptions {
 /**
  * @brief Options for decoding (parsing) an INI string.
  * @see https://github.com/npm/ini#decodeinistring-options
- * @since 0.1.0
+ * @since 1.0.0
  */
 struct DecodeOptions {
     /** @brief Interpret `key[]` as array syntax (true) or literal key (false). */
@@ -234,14 +234,14 @@ struct DecodeOptions {
  * @endcode
  *
  * @see https://github.com/npm/ini#parseinistring-options
- * @since 0.1.0
+ * @since 1.0.0
  */
 IniDocument parse(const std::string& str, const DecodeOptions& opt = {});
 
 /**
  * @brief Alias for parse().
  * @see parse()
- * @since 0.1.0
+ * @since 1.0.0
  */
 IniDocument decode(const std::string& str, const DecodeOptions& opt = {});
 
@@ -260,14 +260,14 @@ IniDocument decode(const std::string& str, const DecodeOptions& opt = {});
  * @endcode
  *
  * @see https://github.com/npm/ini#encodeobject-options
- * @since 0.1.0
+ * @since 1.0.0
  */
 std::string stringify(const IniDocument& obj, const EncodeOptions& opt = {});
 
 /**
  * @brief Alias for stringify().
  * @see stringify()
- * @since 0.1.0
+ * @since 1.0.0
  */
 std::string encode(const IniDocument& obj, const EncodeOptions& opt = {});
 
@@ -282,7 +282,7 @@ std::string encode(const IniDocument& obj, const EncodeOptions& opt = {});
  * @return Escaped string.
  *
  * @see https://github.com/npm/ini#safevalue
- * @since 0.1.0
+ * @since 1.0.0
  */
 std::string safe(const std::string& val);
 
@@ -296,7 +296,7 @@ std::string safe(const std::string& val);
  * @return Unescaped string.
  *
  * @see https://github.com/npm/ini#unsafevalue
- * @since 0.1.0
+ * @since 1.0.0
  */
 std::string unsafe(const std::string& val);
 
@@ -309,7 +309,7 @@ std::string unsafe(const std::string& val);
  * @param doc The document to search.
  * @param key The key to find.
  * @return Pointer to the value, or nullptr if not found.
- * @since 0.1.0
+ * @since 1.0.0
  */
 IniValue* find(IniDocument& doc, const std::string& key);
 
@@ -318,7 +318,7 @@ IniValue* find(IniDocument& doc, const std::string& key);
  * @param doc The document to search.
  * @param key The key to find.
  * @return Const pointer to the value, or nullptr if not found.
- * @since 0.1.0
+ * @since 1.0.0
  */
 const IniValue* find(const IniDocument& doc, const std::string& key);
 
@@ -327,7 +327,7 @@ const IniValue* find(const IniDocument& doc, const std::string& key);
  * @param doc The document to search.
  * @param key The key to check.
  * @return true if the key exists.
- * @since 0.1.0
+ * @since 1.0.0
  */
 bool hasKey(const IniDocument& doc, const std::string& key);
 
@@ -340,7 +340,7 @@ bool hasKey(const IniDocument& doc, const std::string& key);
  * @param doc The document to modify.
  * @param key The key to set.
  * @param value The value to assign.
- * @since 0.1.0
+ * @since 1.0.0
  */
 void set(IniDocument& doc, const std::string& key, IniValue value);
 
@@ -348,7 +348,7 @@ void set(IniDocument& doc, const std::string& key, IniValue value);
  * @brief Get all keys in an IniDocument in insertion order.
  * @param doc The document.
  * @return Vector of key strings.
- * @since 0.1.0
+ * @since 1.0.0
  */
 std::vector<std::string> keys(const IniDocument& doc);
 
@@ -357,7 +357,7 @@ std::vector<std::string> keys(const IniDocument& doc);
  * @param doc The document to modify.
  * @param key The key to remove.
  * @return true if the key was found and removed.
- * @since 0.1.0
+ * @since 1.0.0
  */
 bool remove(IniDocument& doc, const std::string& key);
 

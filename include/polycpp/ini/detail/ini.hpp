@@ -3,7 +3,7 @@
 /**
  * @file detail/ini.hpp
  * @brief Inline implementations for polycpp::ini.
- * @since 0.1.0
+ * @since 1.0.0
  */
 
 #include <polycpp/ini/ini.hpp>

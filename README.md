@@ -6,7 +6,7 @@ An INI format parser and serializer for C++20, using polycpp's Node.js-like API 
 
 ## Status
 
-Port version: `0.2.0`
+Port version: `1.0.0`
 
 Initial port based on upstream version: `6.0.0`
 

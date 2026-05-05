@@ -244,7 +244,7 @@ infer or hand-write a `.d.ts` shim. The README is the canonical contract.
   - Date/time interop policy: not applicable.
   - diagnostic/config object policy: `IniValue::isString()`/`asString()`/
     `isBool()`/`isArray()`/`isDocument()` are typed accessors. `IniValue::toJSON()`
-    converts to `polycpp::JsonValue` (added in `0.2.0`); a JSON-to-INI
+    converts to `polycpp::JsonValue` (added in `1.0.0`); a JSON-to-INI
     `fromJSON()` adapter is not provided yet.
   - toJSON/stringify policy: `polycpp::JSON::stringify(IniValue)` is supported
     via the `HasToJson` concept (`IniValue::toJSON()` returns
@@ -413,7 +413,7 @@ future maintainer can revisit them, not promised:
   `IniValue::toJSON()`. Lossy by nature: JSON numbers must collapse into INI
   strings (since INI has no number type). Worth adding once a concrete
   consumer asks. Outbound `IniValue::toJSON()` and
-  `polycpp::JSON::stringify(IniValue)` are now implemented (added in `0.2.0`);
+  `polycpp::JSON::stringify(IniValue)` are now implemented (added in `1.0.0`);
   see `docs/api-mapping.md`.
 - streaming/chunked parse and serialize — would let consumers handle very
   large INI files without buffering the entire text. Upstream `ini` reads the
@@ -428,10 +428,10 @@ future maintainer can revisit them, not promised:
 
 ## v0 scope
 
-- port version: 0.2.0
+- port version: 1.0.0
 - versioning note: port version is independent from upstream npm versioning;
   the README declares "Initial port based on upstream version: 6.0.0".
-- supported APIs: `polycpp::ini::parse`, `decode`, `stringify`, `encode`, `safe`, `unsafe`, plus the `IniValue`/`IniDocument`/`EncodeOptions`/`DecodeOptions` types, the `find/hasKey/set/keys/remove` helpers, and (since `0.2.0`) `IniValue::toJSON()` plus the `polycpp::JSON::stringify(IniValue)` template overload it enables.
+- supported APIs: `polycpp::ini::parse`, `decode`, `stringify`, `encode`, `safe`, `unsafe`, plus the `IniValue`/`IniDocument`/`EncodeOptions`/`DecodeOptions` types, the `find/hasKey/set/keys/remove` helpers, and (since `1.0.0`) `IniValue::toJSON()` plus the `polycpp::JSON::stringify(IniValue)` template overload it enables.
   - `polycpp::ini::parse(const std::string&, const DecodeOptions&)` — alias for `decode`
   - `polycpp::ini::decode(const std::string&, const DecodeOptions&)`
   - `polycpp::ini::stringify(const IniDocument&, const EncodeOptions&)` — alias for `encode`
