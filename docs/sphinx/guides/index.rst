@@ -10,6 +10,8 @@ specific question.
 
    array-values
    quoting-special-chars
+   comments
    align-and-sort
    crlf-platform
    remove-key
+   error-handling

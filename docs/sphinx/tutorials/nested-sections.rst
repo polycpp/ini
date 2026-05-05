@@ -78,13 +78,13 @@ segment by segment:
 .. code-block:: cpp
 
    const IniValue* lookup(const IniDocument& d,
-                          std::initializer_list<std::string> path) {
+                          const std::vector<std::string>& path) {
        const IniDocument* cur = &d;
        const IniValue* last = nullptr;
-       for (const auto& seg : path) {
-           last = find(*cur, seg);
+       for (size_t i = 0; i < path.size(); ++i) {
+           last = find(*cur, path[i]);
            if (!last) return nullptr;
-           if (seg != *(path.end() - 1)) {
+           if (i + 1 < path.size()) {
                if (!last->isDocument()) return nullptr;
                cur = &last->asDocument();
            }
@@ -94,6 +94,11 @@ segment by segment:
 
    auto* v = lookup(doc, {"log", "file", "rotate", "max_size"});
    std::cout << v->asString() << '\n';   // 100M
+
+Index-based iteration is safer than comparing the segment value against
+``*(path.end() - 1)`` — the latter misbehaves when a path contains
+duplicate segments (e.g. ``{"a", "b", "a"}``), since the comparison
+matches every occurrence of ``"a"`` and not just the final one.
 
 Step 4 — enumerate top-level keys
 ---------------------------------

@@ -103,6 +103,15 @@ surfaces as a bool, not a string. For values that happen to look like
 booleans but should be kept as strings, wrap them in single quotes:
 ``mode='true'``.
 
+.. note::
+
+   INI has no native numeric type. Numeric-looking values like
+   ``port=8080`` round-trip as the **string** ``"8080"``, accessed via
+   :cpp:func:`IniValue::asString()`. Convert at the consumer with
+   ``std::stoi`` (wrap in ``try`` / ``catch``) or ``std::from_chars``
+   for a safe parse. The only tokens recognised as typed (non-string)
+   scalars are ``true``, ``false``, and ``null``.
+
 :cpp:func:`polycpp::ini::set` does the obvious thing: if the key
 already exists, it replaces the value in place; otherwise it appends
 a new pair at the end.

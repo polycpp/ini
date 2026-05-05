@@ -79,6 +79,8 @@ Step 4 — assemble the Config
 
 .. code-block:: cpp
 
+   #include <charconv>
+
    Config load_config(const std::string& path) {
        Config cfg;
        IniDocument doc = parse(slurp(path));
@@ -87,9 +89,18 @@ Step 4 — assemble the Config
        if (server && server->isDocument()) {
            const auto& s = server->asDocument();
            cfg.host = get_str(s, "host").value_or(cfg.host);
-           // parse() surfaces numeric strings as IniString;
-           // stoi on a missing key would throw, so use a fallback.
-           if (auto port = get_str(s, "port")) cfg.port = std::stoi(*port);
+           // INI has no native numeric type — parse() surfaces port=8080
+           // as the string "8080". Use std::from_chars for a safe parse:
+           // a non-numeric line like `port=abc` does not throw, it just
+           // leaves cfg.port at its default.
+           if (auto port = get_str(s, "port")) {
+               int parsed = 0;
+               auto [ptr, ec] = std::from_chars(
+                   port->data(), port->data() + port->size(), parsed);
+               if (ec == std::errc() && ptr == port->data() + port->size()) {
+                   cfg.port = parsed;
+               }
+           }
            cfg.ssl  = get_bool(s, "ssl").value_or(cfg.ssl);
        }
        cfg.log_level = get_str(doc, "log_level").value_or(cfg.log_level);
@@ -99,6 +110,12 @@ Step 4 — assemble the Config
 The ``server`` section may be absent altogether, so the outer
 ``if (server && server->isDocument())`` is non-negotiable. Inside it,
 every individual key falls back to the ``Config`` default.
+
+``std::from_chars`` keeps the loader total: a malformed line like
+``port=abc`` leaves ``cfg.port`` at its default instead of throwing
+an uncaught ``std::invalid_argument`` the way ``std::stoi`` would. A
+``try`` / ``catch`` around ``std::stoi`` is the equivalent fallback
+if you prefer it stylistically.
 
 Step 5 — smoke-test it
 ----------------------

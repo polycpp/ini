@@ -3,6 +3,8 @@ ini
 
 **INI config parse and serialize**
 
+**Status:** port version 1.0.0 — based on npm ``ini`` 6.0.0.
+
 Order-preserving, round-trip-safe INI parser and serialiser. Port of the npm ``ini`` package, with the same bracketed-array semantics, the same quoting rules, and a typed ``IniValue`` variant for nested sections, arrays, booleans, and strings.
 
 .. code-block:: cpp
@@ -12,10 +14,15 @@ Order-preserving, round-trip-safe INI parser and serialiser. Port of the npm ``i
 
    // Parse — every value is an IniValue variant.
    auto doc = parse("[server]\nhost=0.0.0.0\nport=8080\nssl=true\n");
-   auto* server = find(doc, "server");
-   auto* host   = find(server->asDocument(), "host");
-   // host->asString() == "0.0.0.0"
-   // find(server->asDocument(), "ssl")->asBool() == true
+   if (auto* server = find(doc, "server"); server && server->isDocument()) {
+       const auto& s = server->asDocument();
+       if (auto* host = find(s, "host"); host && host->isString()) {
+           // host->asString() == "0.0.0.0"
+       }
+       if (auto* ssl = find(s, "ssl"); ssl && ssl->isBool()) {
+           // ssl->asBool() == true
+       }
+   }
 
    // Build and serialise.
    IniDocument out;
@@ -92,3 +99,17 @@ Getting started
    :caption: Examples
 
    examples/index
+
+.. toctree::
+   :hidden:
+   :caption: About
+
+   about/differences-from-upstream
+
+.. toctree::
+   :hidden:
+   :caption: Project
+
+   changelog
+   contributing
+   license

@@ -5,12 +5,18 @@ ini targets C++20 and builds with clang ≥ 14 or gcc ≥ 11. It depends
 only on the base `polycpp <https://github.com/enricohuang/polycpp>`_ library
 (and none).
 
+The minimum required CMake version is **3.20** (see the project's
+``CMakeLists.txt``).
+
 CMake FetchContent (recommended)
 --------------------------------
 
-Add the library to your ``CMakeLists.txt``:
+FetchContent is the supported integration path. Add the library to your
+``CMakeLists.txt``:
 
 .. code-block:: cmake
+
+   cmake_minimum_required(VERSION 3.20)
 
    include(FetchContent)
 
@@ -26,6 +32,13 @@ Add the library to your ``CMakeLists.txt``:
 
 The first configure pulls ``polycpp`` transitively, so the build tree may be
 large. Pin ``GIT_TAG`` to a specific commit for reproducible builds.
+
+.. note::
+
+   ``find_package(polycpp_ini)`` is **not yet supported**. The current
+   ``CMakeLists.txt`` does not generate ``install()`` rules or an
+   exported config package; integration is via ``FetchContent`` only.
+   System-install support is planned but not present in 1.0.0.
 
 Using a local clone
 -------------------
@@ -48,15 +61,9 @@ Build options
     Build the GoogleTest suite. Defaults to ``ON`` for standalone builds and
     ``OFF`` when consumed via FetchContent.
 
-``POLYCPP_IO``
-    ``asio`` (default) or ``libuv`` — inherited from polycpp.
-
-``POLYCPP_SSL_BACKEND``
-    ``boringssl`` (default) or ``openssl``.
-
-``POLYCPP_UNICODE``
-    ``icu`` (recommended) or ``builtin``. ICU enables the Intl surface that
-    several polycpp headers pull into their public signatures.
+``POLYCPP_INI_BUILD_EXAMPLES``
+    Build the example programs in ``examples/`` (``load_config``,
+    ``reformat``, ``set_value``). Defaults to ``OFF``.
 
 Verifying the install
 ---------------------
