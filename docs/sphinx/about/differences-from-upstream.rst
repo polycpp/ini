@@ -6,8 +6,10 @@ This C++ port is faithful to npm ``ini`` 6.0.0 in input/output behaviour
 divergences below are intentional and mostly stem from the move from a
 dynamic JS object to a typed C++ variant.
 
-For an exhaustive, line-referenced list see ``docs/divergences.md`` in
-the source tree.
+Upstream parity is verified against npm ``ini`` at tag ``v6.0.0``
+(commit ``180a8d5c72d7f13ed70c53619132f3a8ee5ac6ed``). For an
+exhaustive, line-referenced list see ``docs/divergences.md`` in the
+source tree.
 
 Typed ``IniValue`` variant
 --------------------------

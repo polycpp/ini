@@ -79,6 +79,11 @@ Expected output:
    ssl     = true
    workers = 4
 
+The first block shows the program's own readback (``"yes"`` / ``"no"``
+strings come from the ``? :`` in user code), while the second block is
+``stringify`` output where the typed boolean is serialised back to the
+canonical ``true`` token.
+
 What just happened
 ------------------
 

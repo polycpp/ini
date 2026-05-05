@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.0.0
------
+1.0.0 — 2026-05-05
+------------------
 
 Initial public release. Port of npm ``ini`` 6.0.0 with a typed C++
 variant for INI values.
